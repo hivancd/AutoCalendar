@@ -20,4 +20,4 @@ event.add('description', 'This is a sample event description.')
 calendar.add_component(event)
 
 calendar.add_missing_timezones()
-Path("C:/Users/hian/Desktop/AutoCalendar/calendar.ics").write_bytes(calendar.to_ical())
+Path("./calendar.ics").write_bytes(calendar.to_ical())
