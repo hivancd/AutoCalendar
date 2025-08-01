@@ -1,0 +1,10 @@
+README.md
+pyproject.toml
+src/__init__.py
+src/calender_event.py
+src/main.py
+src/pdf_procesor.py
+src/autocalendar.egg-info/PKG-INFO
+src/autocalendar.egg-info/SOURCES.txt
+src/autocalendar.egg-info/dependency_links.txt
+src/autocalendar.egg-info/top_level.txt
