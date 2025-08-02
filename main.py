@@ -30,15 +30,16 @@ class MyEventHandler(FileSystemEventHandler):
         except:
             return
 
-WATCH_DIR = os.path.expanduser('~/Downloads')  # Directory to watch for file changes
-print(os.path.expanduser('~/Downloads'))
-event_handler = MyEventHandler()
-observer = Observer()
-observer.schedule(event_handler, WATCH_DIR, recursive=True)
-observer.start()
-try:
-    while True:
-        time.sleep(1)
-finally:
-    observer.stop()
-    observer.join()
+def main():
+    WATCH_DIR = os.path.expanduser('~/Downloads')  # Directory to watch for file changes
+    print(os.path.expanduser('~/Downloads'))
+    event_handler = MyEventHandler()
+    observer = Observer()
+    observer.schedule(event_handler, WATCH_DIR, recursive=True)
+    observer.start()
+    try:
+        while True:
+            time.sleep(1)
+    finally:
+        observer.stop()
+        observer.join()
