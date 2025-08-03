@@ -19,7 +19,7 @@ import os
 from watchdog.events import FileSystemEvent, FileSystemEventHandler
 from watchdog.observers import Observer
 
-from src.pdf_procesor import mark_calendar  # Assuming this is the module where the mark_calendar function is defined
+from autocalendar.pdf_procesor import mark_calendar  # Assuming this is the module where the mark_calendar function is defined
 
 class MyEventHandler(FileSystemEventHandler):
     def on_created(self, event: FileSystemEvent) -> None:
@@ -43,3 +43,5 @@ def main():
     finally:
         observer.stop()
         observer.join()
+
+main()
