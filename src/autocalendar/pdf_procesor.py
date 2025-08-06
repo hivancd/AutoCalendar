@@ -20,7 +20,8 @@ import json
 
 load_dotenv()
 api_key = os.getenv('OPENAI_API_KEY')
-        
+
+
 def read_pdf(file_path):
     """Read a PDF file and return its text content."""
     reader = PdfReader(file_path)
@@ -66,28 +67,28 @@ def mark_calendar(file_path):
     # First, loading the model and extracting the payment information    
     # Loading the AI model
     # Create an agent to extract payment information
-    agent = Agent(  
-    'openai:gpt-4.1',
-    system_prompt='''You are a helpful assistant that extracts information from PDF documents and provides concise and exact answers. 
-    for the following PDF document, you are going to analyze every page and in each page you will look for the following information:
-    1. The date of the document.
-    2. The sender of the document.
-    3. If the document refers to a payment or not.
-    4. If the document refers to a payment, you should provide:
-    1. The payment amount or "tasa"
-    2. Only the exact day of the due date of the payment, if it is relative take the date of the document as reference, don't include nothing but the date in RFC3339 format in this answer.
-    3. The payment method if available 
-    4. A very short reason for the payment
-    If you don't find any of the information, you should return "Not found" for that specific information.
-    If the document does not mention any of the information at all, you should return "None".
-    Translate the information to Spanish if it is in another language.
-    ''',  
-    output_type=ToolOutput(Payment),
-    )
-    
-    
     try:
-        
+        agent = Agent(  
+        'openai:gpt-4.1',
+        system_prompt='''You are a helpful assistant that extracts information from PDF documents and provides concise and exact answers. 
+        for the following PDF document, you are going to analyze every page and in each page you will look for the following information:
+        1. The date of the document.
+        2. The sender of the document.
+        3. If the document refers to a payment or not.
+        4. If the document refers to a payment, you should provide:
+        1. The payment amount or "tasa"
+        2. Only the exact day of the due date of the payment, if it is relative take the date of the document as reference, don't include nothing but the date in RFC3339 format in this answer.
+        3. The payment method if available 
+        4. A very short reason for the payment
+        If you don't find any of the information, you should return "Not found" for that specific information.
+        If the document does not mention any of the information at all, you should return "None".
+        Translate the information to Spanish if it is in another language.
+        ''',  
+        output_type=ToolOutput(Payment),
+        )
+    
+    
+            
         # Run the agent to extract information
         text = read_pdf(file_path)
         result = agent.run_sync(text)
@@ -96,9 +97,14 @@ def mark_calendar(file_path):
         
     except HttpError as error:
         print(f"An error occurred: {error}")
-
+        return
+    
+    if payment.is_payment is False:
+        print("The document does not refer to a payment.")
+        return
     # Next, we mark the date in the calendar:
     # Credentials for the Google Calendar API
+    credentials=os.path.join(script_dir, "credentials.json")
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -111,7 +117,7 @@ def mark_calendar(file_path):
         creds.refresh(Request())
       else:
         flow = InstalledAppFlow.from_client_secrets_file(
-            "credentials.json", SCOPES
+            credentials, SCOPES
         )
         creds = flow.run_local_server(port=0)
       # Save the credentials for the next run
@@ -120,11 +126,13 @@ def mark_calendar(file_path):
     
     # Create the event from the extracted information    
     service = build("calendar", "v3", credentials=creds)
+    print(f"Creating event for payment: {payment.payment_reason} on {payment.due_date}")
     event = service.events().insert(calendarId="primary", body=payment.payment_to_event()).execute()
     print(f"Event created: {event.get('htmlLink')}")
 
 
 if __name__ == "__main__":
     # Example usage
-    file_path = "Comunicación de Inicio.pdf"  # Replace with your PDF file path
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(script_dir, "Comunicación de inicio.pdf")  # Replace with your PDF file path
     mark_calendar(file_path)
