@@ -23,18 +23,18 @@ from src.autocalendar.pdf_procesor import mark_calendar  # Assuming this is the 
 
 import dotenv
 
+from src.autocalendar.utils import get_downloads_path 
+
 import argparse
 
 parser = argparse.ArgumentParser(description="AutoCalendar PDF Processor")
-parser.add_argument('--user', type=str, help='Windows User to watch Downloads to.', required=True)
-
+parser.add_argument('--user', type=str, help='Windows User to watch Downloads to.', required=False)
 user= parser.parse_args().user
-
 print(f"Watching Downloads for user: {user}")
 
+# Load environment variables from .env file
 env_path = os.path.join(os.path.dirname(__file__),'.env')
 dotenv.load_dotenv(env_path)  
-# print(env_path)
 api_key = os.getenv('OPENAI_API_KEY')
 
 class MyEventHandler(FileSystemEventHandler):
@@ -53,12 +53,20 @@ class MyEventHandler(FileSystemEventHandler):
             return
 
 def main(user):
-    WATCH_DIR = os.path.join(os.path.expanduser('~'))  # Directory to watch for file changes
-    downloads_dir = json.load(open('C:\\Windows\\System32\\config\\systemprofile\\address.json'))['address']
-    print(downloads_dir)
+    # WATCH_DIR = os.path.join(os.path.expanduser(user),'Downloads')  # Directory to watch for file changes
+    download_dir = json.load(open('C:\\Windows\\System32\\config\\systemprofile\\address.json'))['address']
+    # print(WATCH_DIR)
+    
+    # Get the Downloads directory for the specified user
+    if not user:
+        user = 'hian'  # Default user if not provided
+    
+    # download_dir = get_downloads_path(user)  
+    print(f"Downloads directory for user '{user}': {download_dir}")
+
     event_handler = MyEventHandler()
     observer = Observer()
-    observer.schedule(event_handler, downloads_dir, recursive=True)
+    observer.schedule(event_handler, download_dir, recursive=True)
     observer.start()
     # f"Watching for new PDF files in {downloads_dir}..."
     try:

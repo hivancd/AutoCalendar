@@ -5,3 +5,5 @@ output
 /src/autocalendar/__pycache__
 /src/autocalendar/__pycache__/pdf_procesor.cpython-313.pyc
 /src/autocalendar/executable config.json
+.vscode/settings.json
+src/autocalendar/__pycache__/pdf_procesor.cpython-313.pyc
