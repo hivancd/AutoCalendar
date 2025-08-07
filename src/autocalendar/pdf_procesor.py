@@ -2,7 +2,6 @@ from pypdf import PdfReader
 
 import os
 import os.path
-from dotenv import load_dotenv
 from datetime import datetime, date
 
 from pydantic import BaseModel
@@ -15,12 +14,6 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-
-import json
-
-load_dotenv()
-api_key = os.getenv('OPENAI_API_KEY')
-
 
 def read_pdf(file_path):
     """Read a PDF file and return its text content."""
@@ -59,7 +52,7 @@ class Payment(BaseModel):
 SCOPES = ["https://www.googleapis.com/auth/calendar.events.owned"]
 
 
-def mark_calendar(file_path):
+def mark_calendar(file_path, api_key, token_path="token.json"):
     """Shows basic usage of the Google Calendar API.
     Prints the start and name of the next 10 events on the user's calendar.
     """
@@ -87,24 +80,29 @@ def mark_calendar(file_path):
         output_type=ToolOutput(Payment),
         )
     
-    
-            
         # Run the agent to extract information
+        print(f"Processing file: {file_path}")
         text = read_pdf(file_path)
+        print(f"Extracted text from PDF: {text[:10]}...")  # Print the first 500 characters of the text for debugging
+        # print(agent.capture_run_messages())
+        # print(api_key)
         result = agent.run_sync(text)
+        # print(f"Extracted result: {result.output.document_name}")
         payment = result.output
         # print(payment.payment_to_event())
         
     except HttpError as error:
-        print(f"An error occurred: {error}")
-        return
+        return(f"An error occurred: {error}")
+        
     
     if payment.is_payment is False:
-        print("The document does not refer to a payment.")
-        return
+        return("The document does not refer to a payment.")
+        
     # Next, we mark the date in the calendar:
     # Credentials for the Google Calendar API
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     credentials=os.path.join(script_dir, "credentials.json")
+    print(f"Using credentials from: {credentials}")
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
     # created automatically when the authorization flow completes for the first
@@ -119,16 +117,21 @@ def mark_calendar(file_path):
         flow = InstalledAppFlow.from_client_secrets_file(
             credentials, SCOPES
         )
-        creds = flow.run_local_server(port=0)
+        creds = flow.run_local_server(host='localhost',
+            port=0, 
+            authorization_prompt_message='Please visit this URL: {url}', 
+            success_message='The auth flow is complete; you may close this window.',
+            open_browser=True
+        )#port=0
       # Save the credentials for the next run
         with open("token.json", "w") as token:
             token.write(creds.to_json())  
-    
+    print("Credentials loaded successfully.")
     # Create the event from the extracted information    
     service = build("calendar", "v3", credentials=creds)
     print(f"Creating event for payment: {payment.payment_reason} on {payment.due_date}")
     event = service.events().insert(calendarId="primary", body=payment.payment_to_event()).execute()
-    print(f"Event created: {event.get('htmlLink')}")
+    return(f"Event created: {event.get('htmlLink')}")
 
 
 if __name__ == "__main__":
