@@ -25,12 +25,12 @@ import dotenv
 
 from src.autocalendar.utils import get_downloads_path 
 
-import argparse
+# import argparse
 
-parser = argparse.ArgumentParser(description="AutoCalendar PDF Processor")
-parser.add_argument('--user', type=str, help='Windows User to watch Downloads to.', required=False)
-user= parser.parse_args().user
-print(f"Watching Downloads for user: {user}")
+# parser = argparse.ArgumentParser(description="AutoCalendar PDF Processor")
+# parser.add_argument('--user', type=str, help='Windows User to watch Downloads to.', required=False)
+# user= parser.parse_args().user
+# print(f"Watching Downloads for user: {user}")
 
 # Load environment variables from .env file
 env_path = os.path.join(os.path.dirname(__file__),'.env')
@@ -50,19 +50,12 @@ class MyEventHandler(FileSystemEventHandler):
                     print(f"Failed to mark calendar for: {event.src_path}")
         except Exception as e:
             print(f"Unexpected error processing file {event.src_path}: {e}")
-            return
 
-def main(user):
-    # WATCH_DIR = os.path.join(os.path.expanduser(user),'Downloads')  # Directory to watch for file changes
-    download_dir = json.load(open('C:\\Windows\\System32\\config\\systemprofile\\address.json'))['address']
-    # print(WATCH_DIR)
-    
-    # Get the Downloads directory for the specified user
-    if not user:
-        user = 'hian'  # Default user if not provided
-    
-    # download_dir = get_downloads_path(user)  
-    print(f"Downloads directory for user '{user}': {download_dir}")
+def main():
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    address_path = os.path.join(script_dir, "address.json")
+    download_dir = json.load(open(address_path))['address']
+    print(f"Downloads directory: {download_dir}")
 
     event_handler = MyEventHandler()
     observer = Observer()
@@ -78,4 +71,4 @@ def main(user):
         observer.join()
 
 if __name__ == "__main__":
-    main(user)
+    main()

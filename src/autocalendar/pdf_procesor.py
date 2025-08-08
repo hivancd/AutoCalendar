@@ -1,5 +1,5 @@
 from pypdf import PdfReader
-
+import time
 import os
 import os.path
 from datetime import datetime, date
@@ -15,9 +15,19 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+
 def read_pdf(file_path):
     """Read a PDF file and return its text content."""
-    reader = PdfReader(file_path)
+    count = 0
+    while count < 4:
+        try:
+            print(f"Reading PDF file: {file_path}")
+            reader = PdfReader(file_path)
+            break
+        except Exception as e:
+            print(f"Error reading PDF file: {e}. Retrying in {2 ** count} seconds...")
+            time.sleep(2 ** count)  # Exponential backoff
+            count += 1
     text = ""
     for page in reader.pages:
         text += page.extract_text() or ""
@@ -52,7 +62,7 @@ class Payment(BaseModel):
 SCOPES = ["https://www.googleapis.com/auth/calendar.events.owned"]
 
 
-def mark_calendar(file_path, api_key, token_path="token.json"):
+def mark_calendar(file_path, api_key):
     """Shows basic usage of the Google Calendar API.
     Prints the start and name of the next 10 events on the user's calendar.
     """
@@ -82,7 +92,9 @@ def mark_calendar(file_path, api_key, token_path="token.json"):
     
         # Run the agent to extract information
         print(f"Processing file: {file_path}")
+        
         text = read_pdf(file_path)
+            
         print(f"Extracted text from PDF: {text[:10]}...")  # Print the first 500 characters of the text for debugging
         # print(agent.capture_run_messages())
         # print(api_key)
@@ -101,32 +113,13 @@ def mark_calendar(file_path, api_key, token_path="token.json"):
     # Next, we mark the date in the calendar:
     # Credentials for the Google Calendar API
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    credentials=os.path.join(script_dir, "credentials.json")
-    print(f"Using credentials from: {credentials}")
-    creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists("token.json"):
-      creds = Credentials.from_authorized_user_file("token.json", SCOPES)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-      if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-      else:
-        flow = InstalledAppFlow.from_client_secrets_file(
-            credentials, SCOPES
-        )
-        creds = flow.run_local_server(host='localhost',
-            port=0, 
-            authorization_prompt_message='Please visit this URL: {url}', 
-            success_message='The auth flow is complete; you may close this window.',
-            open_browser=True
-        )#port=0
-      # Save the credentials for the next run
-        with open("token.json", "w") as token:
-            token.write(creds.to_json())  
-    print("Credentials loaded successfully.")
+    token_path = os.path.join(script_dir, "token.json")
+    print(f"Using token from: {token_path}")
+    try:
+        creds = Credentials.from_authorized_user_file(token_path, SCOPES)
+    except Exception as e:
+        return(f"Error loading credentials: {e}. Please ensure you have a valid token.json file.")
+    
     # Create the event from the extracted information    
     service = build("calendar", "v3", credentials=creds)
     print(f"Creating event for payment: {payment.payment_reason} on {payment.due_date}")
@@ -138,4 +131,5 @@ if __name__ == "__main__":
     # Example usage
     script_dir = os.path.dirname(os.path.abspath(__file__))
     file_path = os.path.join(script_dir, "Comunicación de inicio.pdf")  # Replace with your PDF file path
-    mark_calendar(file_path)
+    # mark_calendar(file_path)
+    read_pdf(file_path)
