@@ -72,7 +72,7 @@ This Python application streamlines your bill tracking workflow using AI. It mon
    - Enable the Calendar API.
    - Create service account credentials and share your Google calendar with the service account email.
 
-3. **How to convert python code to pdf**
+3. **How to convert python code to exe and windows service**
     - Install modules: PyInstaller and auto-py-to-exe
     - Run: 'auto-py-to-exe' in cmd
     - Once in UI scroll to settings and Import json config
