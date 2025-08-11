@@ -79,7 +79,7 @@ This Python application streamlines your bill tracking workflow using AI. It mon
     - Import the .json config file called 'executable config.json' in 'src/autocalendar'
     - Select output folder for the exe file
     - Download and follow instructions of WinSW for using the exe as a windows services
-    - For getting the google api credentials run get creds.exe and follow the instructions
+    - For getting the google api credentials run get creds.py or turn it into .exe using auto-py-to-pdf and follow the instructions
   
 ---
 
